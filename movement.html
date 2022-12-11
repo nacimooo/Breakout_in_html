@@ -20,6 +20,9 @@
             width: 600px;
             align-self: center;
             display: none;
+            border-style: solid;
+            border-width: 3px;
+            border-color: rgb(136, 138, 122);
         }
 
         .box {
@@ -52,6 +55,17 @@
             border-width: 3px;
             border-color: rgb(157, 84, 0);
         }
+
+        .score {
+            position: absolute;
+            top: 600px;
+            height: 100px;
+            width: inherit;
+            background-color: rgb(43, 105, 54);
+            border-style: solid;
+            border-color: rgb(26, 65, 34);
+            border-width: 3px;
+        }
     </style>
 
 
@@ -69,13 +83,17 @@
     <div id="parent" class="gameBox">
         <div id="ball" class="ball"></div>
         <div id="div" class="box"></div>
+        <div id="score" class="score"></div>
     </div>
 
 
     <script>
-        console.log(document.getElementById("parent").style.width)
-        console.log(parseInt(removeLastTwo(document.getElementById("parent").style.width)))
         let gameboardSize = 600;
+
+        // Game things
+        let scoreBoard = document.getElementById("score");
+        let lives = 3;
+
 
         // Brick Properties
         let brickWidth = 100;
@@ -110,8 +128,19 @@
 
             initBoard(6, rows);
             direction.x = -1; direction.y = 1;
-            
+
             setInterval(moveBall, 10);
+            refreshScoreBoard();
+        }
+
+        function refreshScoreBoard() {
+            if (lives > 0) {
+                scoreBoard.innerHTML = "<h3>Lives" + lives + "</h3>"
+            }
+            else{
+                speed = 0;
+                scoreBoard.innerHTML = "<h3>Game Over!</h3>"
+            }
         }
 
         // Lays out the bricks
@@ -150,14 +179,14 @@
 
             for (i = 0; i < totalBricks.length; i++) {
                 if (ballPosY + ballRadius > parseInt(removeLastTwo(totalBricks[i].style.top)) &&
-                    ballPosY + ballRadius < parseInt(removeLastTwo(totalBricks[i].style.top)) + brickHeight && 
+                    ballPosY + ballRadius < parseInt(removeLastTwo(totalBricks[i].style.top)) + brickHeight &&
                     ballPosX > parseInt(removeLastTwo(totalBricks[i].style.left)) &&
                     ballPosX < parseInt(removeLastTwo(totalBricks[i].style.left)) + brickWidth) {
                     totalBricks[i].remove();
                 }
             }
         }
-        
+
         // Check for collision between the ball and the paddle
         function checkForCollisionPaddle(ball, paddle) {
             if (ballPosY > paddlePosY &&
@@ -190,7 +219,13 @@
                 direction.y = -1;
             }
             if (ballPosY > gameboardSize) {
-                direction.x = 1;
+                resetBallPosition();
+
+                lives -= 1;
+                direction.x = -1;
+                direction.y = 1;
+
+                refreshScoreBoard();
             }
         }
 
@@ -223,7 +258,10 @@
             }
         }
 
-
+        function resetBallPosition() {
+            ballPosX = 300;
+            ballPosY = 300;
+        }
 
         document.addEventListener("mousemove", function (event) {
             let Gameboard = document.getElementById("parent");
