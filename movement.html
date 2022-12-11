@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Movement</title>
+
+    <style>
+        body {
+            background-color: rgb(42, 42, 42);
+        }
+
+        .gameBox {
+            position: absolute;
+            background-color: rgb(235, 239, 213);
+            height: 600px;
+            width: 600px;
+            align-self: center;
+            display: none;
+        }
+
+        .box {
+            position: absolute;
+            left: 300px;
+            top: 300px;
+            width: 150px;
+            height: 50px;
+            border-radius: 5px;
+            background-color: rgb(13, 17, 60);
+        }
+
+        .ball {
+            position: absolute;
+            background-color: rgb(12, 67, 34);
+            border-radius: 100%;
+            left: 0px;
+            top: 0px;
+            width: 50px;
+            height: 50px;
+
+        }
+
+        .brick {
+            position: absolute;
+            width: 100px;
+            height: 50px;
+            background: rgb(202, 136, 44);
+            border-style: solid;
+            border-width: 3px;
+            border-color: rgb(157, 84, 0);
+        }
+    </style>
+
+
+</head>
+
+<body>
+
+    <div id="menu">
+        <input id="speed" placeholder="Speed of the Ball">
+        <br>
+        <input id="numberRow" placeholder="Number of Rows">
+        <br>
+        <button type="button" onclick="startGame()">Start</button>
+    </div>
+    <div id="parent" class="gameBox">
+        <div id="ball" class="ball"></div>
+        <div id="div" class="box"></div>
+    </div>
+
+
+    <script>
+        console.log(document.getElementById("parent").style.width)
+        console.log(parseInt(removeLastTwo(document.getElementById("parent").style.width)))
+        let gameboardSize = 600;
+
+        // Brick Properties
+        let brickWidth = 100;
+        let brickHeight = 50;
+        let rows;
+
+        let totalBricks = [];
+
+        // Ball Properties
+        let speed = 5;
+        let ballPosY = 300;
+        let ballPosX = 300;
+        let ballRadius = 25;
+
+        // let direction = { x: -1, y: 1 };
+        let direction = { x: 0, y: 0 };
+
+        // Paddle Position Trackers
+        let paddleWidth = 150;
+        let paddleHeight = 50;
+        let paddlePosX = 0;
+        let paddlePosY = 0;
+
+
+        // Takes information from menu to the game
+        function startGame() {
+            speed = parseInt(document.getElementById("speed").value);
+            rows = parseInt(document.getElementById("numberRow").value);
+
+            document.getElementById("parent").style.display = "block";
+            document.getElementById("menu").style.display = "none";
+
+            initBoard(6, rows);
+            direction.x = -1; direction.y = 1;
+            
+            setInterval(moveBall, 10);
+        }
+
+        // Lays out the bricks
+        function initBoard(brickNum, rowNum) {
+            let Gameboard = document.getElementById("parent");
+
+            let currentOffsetHor = 0;
+            let currentOffsetVer = 0;
+
+            for (j = 0; j < rowNum; j++) {
+                for (i = 0; i < brickNum; i++) {
+                    let brick = document.createElement('div');
+                    brick.classList.add('brick');
+                    brick.style.left = currentOffsetHor + "px";
+                    brick.style.top = currentOffsetVer + "px";
+
+                    totalBricks.push(brick);
+                    Gameboard.appendChild(brick);
+                    currentOffsetHor += brickWidth;
+                }
+                currentOffsetHor = 0;
+                currentOffsetVer += brickHeight;
+            }
+
+
+        }
+
+        // simple function to trim the px off of attribute return values
+        function removeLastTwo(str) {
+            return str.substring(0, str.length - 2);
+        }
+
+        // Check for collision between the ball and the bricks
+        function checkForCollisionBrick(ball) {
+            // let ball = document.querySelector("ball");
+
+            for (i = 0; i < totalBricks.length; i++) {
+                if (ballPosY + ballRadius > parseInt(removeLastTwo(totalBricks[i].style.top)) &&
+                    ballPosY + ballRadius < parseInt(removeLastTwo(totalBricks[i].style.top)) + brickHeight && 
+                    ballPosX > parseInt(removeLastTwo(totalBricks[i].style.left)) &&
+                    ballPosX < parseInt(removeLastTwo(totalBricks[i].style.left)) + brickWidth) {
+                    totalBricks[i].remove();
+                }
+            }
+        }
+        
+        // Check for collision between the ball and the paddle
+        function checkForCollisionPaddle(ball, paddle) {
+            if (ballPosY > paddlePosY &&
+                ballPosY < paddlePosY + (paddleWidth + (paddleWidth / 4)) &&
+                ballPosX > paddlePosX - (paddleHeight + (paddleHeight / 4)) &&
+                ballPosX < paddlePosX + (paddleHeight + (paddleHeight / 4))
+            ) {
+
+                if (direction.x === 1) {
+                    direction.x = -1;
+
+                }
+                if (direction.x === -1) {
+                    direction.x = 1;
+                }
+
+            }
+        }
+
+        // Check for the collision between the ball and the balls.
+        function checkForCollision() {
+            checkForCollisionPaddle(document.querySelector("ball"), document.querySelector("div"));
+            if (ballPosY < 0) {
+                direction.x = -1;
+            }
+            if (ballPosX < 0) {
+                direction.y = 1;
+            }
+            if (ballPosX > gameboardSize) {
+                direction.y = -1;
+            }
+            if (ballPosY > gameboardSize) {
+                direction.x = 1;
+            }
+        }
+
+
+        // Moves the ball according to its current direction
+        function moveBall() {
+            let ball = document.querySelector('div#ball');
+
+            callit();
+            checkForCollision();
+
+            if (direction.x === -1) {
+                ballPosY = ballPosY + speed;
+                document.getElementById("ball").style.top = ballPosY + "px";
+            }
+
+            if (direction.x === 1) {
+                ballPosY = ballPosY - speed;
+                document.getElementById("ball").style.top = ballPosY + "px";
+            }
+
+            if (direction.y === -1) {
+                ballPosX = ballPosX - speed;
+                document.getElementById("ball").style.left = ballPosX + "px";
+            }
+
+            if (direction.y === 1) {
+                ballPosX = ballPosX + speed;
+                document.getElementById("ball").style.left = ballPosX + "px";
+            }
+        }
+
+
+
+        document.addEventListener("mousemove", function (event) {
+            let Gameboard = document.getElementById("parent");
+            let paddle = document.getElementById("div");
+
+            if (event.y < gameboardSize && event.x < gameboardSize) {
+                document.body.style.cursor = "none";
+                paddle.style.top = (event.y - 25) + "px";
+                paddle.style.left = (event.x - 75) + "px";
+                paddlePosX = event.x - paddleWidth / 2;
+                paddlePosY = event.y - paddleHeight / 2;
+            }
+        });
+
+        function callit() {
+            checkForCollisionBrick(document.getElementById("ball"))
+        }
+
+
+    </script>
+
+
+
+
+</body>
+
+</html>
