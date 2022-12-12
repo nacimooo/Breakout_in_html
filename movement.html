@@ -13,6 +13,32 @@
             background-color: rgb(42, 42, 42);
         }
 
+        .menu{
+            width: 600px;
+            padding: 50px;
+            padding-right: 0px;
+            background-color: rgb(75, 119, 209);
+        }
+
+        input::placeholder {
+            color: black;
+        }
+
+        .difBtn {
+            width: 5rem;
+            height: 2rem;
+            background-color: cornsilk;
+            border-radius: 10px;
+            border-style: none;
+
+        }
+
+        .forms {
+            border-radius: 5px;
+            height: 2rem;
+            background-color: cornsilk;
+        }
+
         .gameBox {
             position: absolute;
             background-color: rgb(235, 239, 213);
@@ -56,15 +82,34 @@
             border-color: rgb(157, 84, 0);
         }
 
+        .scoreText{
+            color: white; 
+            padding-left: 1.1rem; 
+            font-family: monaco;
+        }
+
         .score {
             position: absolute;
             top: 600px;
+            left: 0px;
             height: 100px;
             width: inherit;
             background-color: rgb(43, 105, 54);
             border-style: solid;
             border-color: rgb(26, 65, 34);
             border-width: 3px;
+        }
+
+        .name{
+            font-family: monaco;
+            font-size: 3rem;
+            color: aliceblue;
+        }
+
+        .subName{
+            font-family: monaco;
+            font-size: 1.5rem;
+            color: aliceblue;
         }
     </style>
 
@@ -73,12 +118,27 @@
 
 <body>
 
-    <div id="menu">
-        <input id="speed" placeholder="Speed of the Ball">
+    <div id="menu" class="menu">
+        <div class="name">Brick Breaker</div>
         <br>
-        <input id="numberRow" placeholder="Number of Rows">
+        <div class="subName">Choose difficulty</div>
+        <button onclick="startGame(1)" class="difBtn">Easy</button>
+        <button onclick="startGame(2)" class="difBtn">Medium</button>
+        <button onclick="startGame(3)" class="difBtn">Hard</button>
+
         <br>
-        <button type="button" onclick="startGame()">Start</button>
+        <br>
+        <div class="subName">Or Make Your Own</div>
+        <button id="customBtn" type="button" onclick="showCustom()" class="difBtn">Custom</button>
+
+        <div id="custom" style="display: none;">
+            <input id="speed" class="forms" placeholder="Speed of the Ball">
+            <br>
+            <input id="numberRow" class="forms" placeholder="Number of Rows">
+            <br>
+            <br>
+            <button type="button" class="difBtn" onclick="startGame(4)">Start</button>
+        </div>
     </div>
     <div id="parent" class="gameBox">
         <div id="ball" class="ball"></div>
@@ -87,12 +147,30 @@
     </div>
 
 
+
+
+
+
+
+
+
+    <script>
+        function showCustom() {
+            document.getElementById('customBtn').style.display = 'none'
+            document.getElementById('custom').style.display = 'block'
+
+        }
+    </script>
+
+
     <script>
         let gameboardSize = 600;
 
         // Game things
         let scoreBoard = document.getElementById("score");
         let lives = 3;
+        let lastLives = lives;
+        let hasWon = false;
 
 
         // Brick Properties
@@ -104,6 +182,7 @@
 
         // Ball Properties
         let speed = 5;
+        let lastSpeed = speed;
         let ballPosY = 300;
         let ballPosX = 300;
         let ballRadius = 25;
@@ -119,9 +198,32 @@
 
 
         // Takes information from menu to the game
-        function startGame() {
-            speed = parseInt(document.getElementById("speed").value);
-            rows = parseInt(document.getElementById("numberRow").value);
+        function startGame(type) {
+            // EASY difficulty
+            if (type === 1) {
+                speed = 3;
+                rows = 1;
+                lives = 5
+            }
+
+            // MEDIUM difficulty
+            if (type === 2) {
+                speed = 5;
+                rows = 3;
+                lives = 3
+            }
+
+            // Hard difficulty
+            if (type === 3) {
+                speed = 6;
+                rows = 2;
+                lives = 1;
+            }
+
+            if (type === 4) {
+                speed = parseInt(document.getElementById("speed").value);
+                rows = parseInt(document.getElementById("numberRow").value);
+            }
 
             document.getElementById("parent").style.display = "block";
             document.getElementById("menu").style.display = "none";
@@ -131,15 +233,53 @@
 
             setInterval(moveBall, 10);
             refreshScoreBoard();
+            document.body.style.cursor = "none";
+
+            lastSpeed = speed;
+            lastLives = lives;
+
+        }
+
+        function reset(){
+            for (i=0; i < totalBricks.length; i++){
+                totalBricks[i].remove();
+            }
+            totalBricks = []
+            
+            initBoard(6, rows);
+            direction.x = -1; direction.y = 1;
+            
+            speed = lastSpeed;
+            lives = lastLives;
+
+            // setInterval(moveBall, 10);
+            refreshScoreBoard();
+
         }
 
         function refreshScoreBoard() {
-            if (lives > 0) {
-                scoreBoard.innerHTML = "<h3>Lives" + lives + "</h3>"
-            }
-            else{
+            if (hasWon) {
                 speed = 0;
-                scoreBoard.innerHTML = "<h3>Game Over!</h3>"
+                scoreBoard.innerHTML = "<h3 class=\"scoreText\">You Won!</h3> <button class=\"difBtn\" type=\"button\" onclick=\"reset()\" style=\"margin-left: 1.1rem\">Retry</button>"
+                return;
+            }
+
+            if (lives > 0) {
+                scoreBoard.innerHTML = "<h3 class=\"scoreText\">Lives" + lives + "</h3>"
+            }
+
+            else {
+                speed = 0;
+                scoreBoard.innerHTML = "<h3 class=\"scoreText\">Game Over!</h3><button class=\"difBtn\" type=\"button\" onclick=\"reset()\" style=\"margin-left: 1.1rem\">Retry</button>"
+            }
+
+        }
+
+        function checkForWin() {
+            if (totalBricks.length < 1) {
+                resetBallPosition();
+                hasWon = true;
+                refreshScoreBoard();
             }
         }
 
@@ -183,6 +323,7 @@
                     ballPosX > parseInt(removeLastTwo(totalBricks[i].style.left)) &&
                     ballPosX < parseInt(removeLastTwo(totalBricks[i].style.left)) + brickWidth) {
                     totalBricks[i].remove();
+                    totalBricks.splice(i, 1);
                 }
             }
         }
@@ -235,6 +376,7 @@
             let ball = document.querySelector('div#ball');
 
             callit();
+            checkForWin();
             checkForCollision();
 
             if (direction.x === -1) {
@@ -268,7 +410,6 @@
             let paddle = document.getElementById("div");
 
             if (event.y < gameboardSize && event.x < gameboardSize) {
-                document.body.style.cursor = "none";
                 paddle.style.top = (event.y - 25) + "px";
                 paddle.style.left = (event.x - 75) + "px";
                 paddlePosX = event.x - paddleWidth / 2;
